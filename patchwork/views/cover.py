@@ -10,6 +10,7 @@ from django.shortcuts import get_object_or_404
 from django.shortcuts import render
 from django.urls import reverse
 
+from patchwork.kernelci import can_test
 from patchwork.models import Cover
 from patchwork.models import Patch
 from patchwork.models import Project
@@ -40,6 +41,9 @@ def cover_detail(request, project_id, msgid):
     context = {
         'submission': cover,
         'project': cover.project,
+        'kernelci_available': can_test(
+            request.user, getattr(cover, 'series', None)
+        ),
     }
 
     comments = cover.comments.all()

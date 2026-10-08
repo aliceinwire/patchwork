@@ -14,6 +14,7 @@ from django.urls import reverse
 
 from patchwork.forms import CreateBundleForm
 from patchwork.forms import PatchForm
+from patchwork.kernelci import can_test
 from patchwork.models import Cover
 from patchwork.models import Patch
 from patchwork.models import Project
@@ -118,6 +119,7 @@ def patch_detail(request, project_id, msgid):
         patch.check_set.all().select_related('user'),
     )
     context['submission'] = patch
+    context['kernelci_available'] = can_test(request.user, patch.series)
     context['editable'] = editable
     context['patch_form'] = form
     context['create_bundle_form'] = create_bundle_form

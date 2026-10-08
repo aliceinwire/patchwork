@@ -19,6 +19,12 @@
   </a>
 {% endif %}
 {% if submission.series %}
+{% if kernelci_available %}
+  <a href="{% url 'kernelci-series' series_id=submission.series.id %}"
+      class="btn btn-default" role="button" title="Test this kernel series">
+    Test with KernelCI
+  </a>
+{% endif %}
   <a href="{% url 'series-mbox' series_id=submission.series.id %}"
       class="btn btn-default" role="button" title="Download patch mbox with dependencies">
     series

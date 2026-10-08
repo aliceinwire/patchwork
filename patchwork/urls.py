@@ -16,6 +16,7 @@ from patchwork.views import api as api_views
 from patchwork.views import bundle as bundle_views
 from patchwork.views import comment as comment_views
 from patchwork.views import cover as cover_views
+from patchwork.views import kernelci as kernelci_views
 from patchwork.views import mail as mail_views
 from patchwork.views import notification as notification_views
 from patchwork.views import patch as patch_views
@@ -110,6 +111,29 @@ urlpatterns = [
         name='comment-redirect',
     ),
     # series views
+    path(
+        'series/<int:series_id>/kernelci/',
+        kernelci_views.series,
+        name='kernelci-series',
+    ),
+    path(
+        'kernelci/<uuid:run_id>/', kernelci_views.detail, name='kernelci-run'
+    ),
+    path(
+        'kernelci/<uuid:run_id>/submit/',
+        kernelci_views.submit,
+        name='kernelci-submit',
+    ),
+    path(
+        'kernelci/<uuid:run_id>/refresh/',
+        kernelci_views.refresh,
+        name='kernelci-refresh',
+    ),
+    path(
+        'kernelci/<uuid:run_id>/report/',
+        kernelci_views.report,
+        name='kernelci-report',
+    ),
     path(
         'series/<int:series_id>/mbox/',
         series_views.series_mbox,
