@@ -30,6 +30,23 @@ jobs:
         run: python -m pip install tox
       - name: Run tox
         run: tox -e pep8
+  kernelci:
+    name: Test optional KernelCI integration
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v6
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: 'pip'
+      - name: Install test runner
+        run: python -m pip install tox
+      - name: Run offline integration tests
+        run: tox -e kernelci
   test:
     name: Run unit tests
     runs-on: ubuntu-latest

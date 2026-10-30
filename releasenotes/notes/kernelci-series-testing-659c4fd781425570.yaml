@@ -1,0 +1,10 @@
+---
+features:
+  - |
+    Add optional KernelCI series testing for active, signed-in users on
+    administrator-configured Linux kernel projects. A background worker uses
+    kci-patchwork and the kci-dev Python API to prepare complete ordered series,
+    submit explicitly confirmed runs, collect results and compare the exact
+    baseline. Private run pages, CSRF-protected actions and durable attempt
+    records restrict access and prevent automatic repeat submissions after
+    uncertain outcomes. See the KernelCI deployment guide for setup and recovery.

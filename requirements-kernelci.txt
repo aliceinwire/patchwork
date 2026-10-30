@@ -1,0 +1,2 @@
+# Optional integration, including its pinned kci-dev Python API dependency.
+kci-patchwork @ git+https://github.com/aliceinwire/kci-patchwork.git@1acedb7ab59a2bf8ab9934c4cf76727552c04b10

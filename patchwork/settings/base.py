@@ -90,6 +90,15 @@ LOGIN_URL = 'auth_login'
 
 LOGIN_REDIRECT_URL = 'user-profile'
 
+# Optional KernelCI integration. Only explicitly configured kernel projects
+# expose the login-only workflow. Credentials are read by the worker only.
+KERNELCI_PROJECTS = {}
+KERNELCI_API_URL = ''
+KERNELCI_PIPELINE_URL = ''
+KERNELCI_TOKEN = os.environ.get('KCI_PIPELINE_TOKEN', '')
+KERNELCI_RUN_ROOT = ''
+KERNELCI_DAILY_LIMIT = 10
+
 
 #
 # Sites settings

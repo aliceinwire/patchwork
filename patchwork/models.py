@@ -8,6 +8,7 @@ from collections import Counter
 import datetime
 import secrets
 import re
+import uuid
 
 from django.conf import settings
 from django.contrib.auth.models import User
@@ -1029,6 +1030,53 @@ class Series(FilenameMixin, models.Model):
             models.Index(
                 fields=['project', 'name', 'id'],
                 name='series_project_name_idx',
+            ),
+        ]
+
+
+class KernelCIRun(models.Model):
+    """A private, durable request to test one kernel series."""
+
+    class State(models.TextChoices):
+        QUEUED = 'queued', 'Queued for preparation'
+        PREPARING = 'preparing', 'Preparing'
+        PREPARED = 'prepared', 'Ready to submit'
+        SUBMIT_QUEUED = 'submit_queued', 'Queued for submission'
+        SUBMITTING = 'submitting', 'Submitting'
+        RUNNING = 'running', 'Collecting results'
+        COMPLETE = 'complete', 'Collection finished'
+        FAILED = 'failed', 'Preparation or configuration error'
+        UNKNOWN = 'unknown', 'Submission needs reconciliation'
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    series = models.ForeignKey(Series, on_delete=models.PROTECT)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.PROTECT
+    )
+    target = models.CharField(max_length=100)
+    selection = models.JSONField(default=dict)
+    manifest = models.JSONField(default=dict)
+    report = models.JSONField(default=dict)
+    state = models.CharField(
+        max_length=16,
+        choices=State.choices,
+        default=State.QUEUED,
+        db_index=True,
+    )
+    error = models.TextField(blank=True)
+    created = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True)
+    next_poll = models.DateTimeField(default=tz_utils.now)
+    poll_until = models.DateTimeField(null=True, blank=True)
+
+    def get_absolute_url(self):
+        return reverse('kernelci-run', kwargs={'run_id': self.pk})
+
+    class Meta:
+        ordering = ['-created']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user', 'series', 'target'], name='kernelci_unique_run'
             ),
         ]
 

@@ -33,6 +33,7 @@ of community projects.
 
    deployment/installation
    deployment/configuration
+   deployment/kernelci
    deployment/management
    deployment/upgrading
 

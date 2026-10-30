@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}KernelCI: {{ series }}{% endblock %}
+{% block body %}
+<h1>Test a kernel series</h1>
+<p><a href="{{ series.get_absolute_url }}">{{ series }}</a> (version {{ series.version }}, {{ series.received_total }}/{{ series.total }} patches)</p>
+<p>Choose a kernel target to prepare the complete, ordered series. Review the selected checkout before submitting it to KernelCI.</p>
+<form method="post">
+  {% csrf_token %}
+  {{ form.as_p }}
+  <button class="btn btn-primary" type="submit">Prepare series</button>
+</form>
+<h2>Your runs for this series</h2>
+<ul>
+{% for run in runs %}
+  <li><a href="{{ run.get_absolute_url }}">{{ run.selection.label }}</a>: {{ run.get_state_display }} ({{ run.created }})</li>
+{% empty %}
+  <li>No runs yet.</li>
+{% endfor %}
+</ul>
+<p>One run is retained per user, series and target. Repeated preparation opens the existing run.</p>
+{% endblock %}

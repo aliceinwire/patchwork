@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block title %}KernelCI: {{ run.series }}{% endblock %}
+{% block body %}
+<h1>KernelCI: {{ run.series }}</h1>
+<p><a href="{% url 'kernelci-series' series_id=run.series_id %}">Back to series testing</a></p>
+<p><strong>{{ run.get_state_display }}</strong> · {{ run.selection.label }} · Updated {{ run.updated }}</p>
+{% if run.error %}<p class="alert alert-warning">{{ run.error }}</p>{% endif %}
+{% if run.manifest %}
+<h2>Prepared selection</h2>
+<dl class="dl-horizontal">
+  <dt>Kernel tree</dt><dd>{{ run.manifest.checkout.revision.url }}</dd>
+  <dt>Branch</dt><dd>{{ run.manifest.checkout.revision.branch }}</dd>
+  <dt>Commit</dt><dd><code>{{ run.manifest.checkout.revision.commit }}</code></dd>
+  <dt>Checkout</dt><dd><code>{{ run.manifest.checkout.id }}</code></dd>
+  <dt>Jobs</dt><dd>{{ run.manifest.job_filter|join:", " }}</dd>
+  <dt>Platforms</dt><dd>{{ run.manifest.platform_filter|join:", "|default:"No platform filter" }}</dd>
+  <dt>KernelCI API</dt><dd>{{ run.manifest.endpoints.api }}</dd>
+</dl>
+<ol>
+{% for patch in run.manifest.patches %}
+  <li>{{ patch.name }} (patch {{ patch.id }})</li>
+{% endfor %}
+</ol>
+{% endif %}
+{% if run.state == 'prepared' %}
+<p>Confirm that this kernel revision and these jobs are appropriate for the series. Preparation does not prove that the patches apply or that the jobs cover the changed code.</p>
+<p>Submitting sends these patches to the configured KernelCI instance. That instance controls who can view the patches and results.</p>
+<form method="post" action="{% url 'kernelci-submit' run_id=run.pk %}">
+  {% csrf_token %}
+  <button class="btn btn-primary" type="submit">Submit to KernelCI</button>
+</form>
+{% elif run.state == 'unknown' %}
+<p>The pipeline may already have accepted this run. An operator must identify the submission before results can be collected.</p>
+{% elif run.state == 'complete' %}
+<form method="post" action="{% url 'kernelci-refresh' run_id=run.pk %}">
+  {% csrf_token %}
+  <button class="btn btn-default" type="submit">Refresh results</button>
+</form>
+{% else %}
+<p>The background worker updates this run. <a href="{{ run.get_absolute_url }}">Reload this page</a> to see its progress.</p>
+{% endif %}
+{% if run.report %}
+<h2>{{ run.report.status }}</h2>
+<p>Results describe observed jobs. Required coverage is not assessed, and this run does not approve the series.</p>
+{% if run.report.submission.patchset_node_id %}
+<p>Patchset node: <a href="{{ run.selection.api }}/viewer?node_id={{ run.report.submission.patchset_node_id|urlencode }}" rel="noreferrer">{{ run.report.submission.patchset_node_id }}</a></p>
+{% endif %}
+{% for error in run.report.errors %}<p class="alert alert-warning">{{ error }}</p>{% endfor %}
+<h3>Baseline comparison</h3>
+<p>Complete: {{ run.report.comparison.complete|yesno:"yes,no,not available" }}. {{ run.report.comparison.reason }}</p>
+<ul>
+{% for classification, count in run.report.comparison.counts.items %}
+  <li>{{ classification }}: {{ count }}</li>
+{% endfor %}
+</ul>
+{% for error in run.report.comparison.errors %}<p class="alert alert-warning">{{ error }}</p>{% endfor %}
+{% if run.report.comparison.results %}
+<table class="table">
+  <thead><tr><th>Job or test path</th><th>Comparison</th><th>Baseline</th><th>Patched</th></tr></thead>
+  <tbody>
+{% for pair in run.report.comparison.results|slice:":100" %}
+    <tr>
+      <td>{{ pair.path|join:" / " }}</td><td>{{ pair.classification }}</td>
+      <td>{% for node in pair.baseline %}<a href="{{ run.selection.api }}/viewer?node_id={{ node.id|urlencode }}" rel="noreferrer">{{ node.result|default:"pending" }}</a> {% empty %}Missing{% endfor %}</td>
+      <td>{% for node in pair.patched %}<a href="{{ run.selection.api }}/viewer?node_id={{ node.id|urlencode }}" rel="noreferrer">{{ node.result|default:"pending" }}</a> {% empty %}Missing{% endfor %}</td>
+    </tr>
+{% endfor %}
+  </tbody>
+</table>
+<p>Showing up to 100 paired results. Full comparison evidence is in the JSON report.</p>
+{% endif %}
+<h3>Observed jobs and tests</h3>
+<table class="table">
+  <thead><tr><th>Job or test</th><th>State</th><th>Result</th></tr></thead>
+  <tbody>
+{% for node in run.report.nodes|slice:":100" %}
+    <tr><td><a href="{{ run.selection.api }}/viewer?node_id={{ node.id|urlencode }}" rel="noreferrer">{{ node.name }}</a></td><td>{{ node.state }}</td><td>{{ node.result|default:"pending" }}</td></tr>
+{% empty %}
+    <tr><td colspan="3">No observations collected yet.</td></tr>
+{% endfor %}
+  </tbody>
+</table>
+<p>The table shows up to 100 observations. The JSON report includes the collected evidence and paired baseline results.</p>
+{% endif %}
+<p><a href="{% url 'kernelci-report' run_id=run.pk %}">Download JSON report</a></p>
+{% endblock %}
